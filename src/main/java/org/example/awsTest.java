@@ -38,6 +38,10 @@ import com.amazonaws.services.ec2.model.DescribeImagesResult;
 import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.Filter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 public class awsTest {
 
     static AmazonEC2      ec2;
@@ -193,6 +197,13 @@ public class awsTest {
                 done = true;
             }
         }
+        // 추가: condor_status 명령 실행
+        try {
+            executeCondorStatusCommand();
+        } catch (IOException e) {
+            System.out.println("Error executing condor_status command: " + e.getMessage());
+        }
+
     }
 
     public static void availableZones()	{
@@ -344,5 +355,28 @@ public class awsTest {
                     images.getImageId(), images.getName(), images.getOwnerId());
         }
 
+    }
+
+    private static void executeCondorStatusCommand() throws IOException {
+        String command = "condor_status";
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(true);
+
+        Process process = processBuilder.start();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+        System.out.println("Output of condor_status command:");
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+        }
+
+        int exitCode;
+        try {
+            exitCode = process.waitFor();
+            System.out.println("condor_status command exited with code " + exitCode);
+        } catch (InterruptedException e) {
+            throw new IOException("Error waiting for condor_status command: " + e.getMessage());
+        }
     }
 }
